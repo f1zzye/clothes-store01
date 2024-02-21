@@ -1,10 +1,11 @@
-from common.views import TitleMixin
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, PasswordResetView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.shortcuts import HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
+
+from common.views import TitleMixin
 from users.models import EmailVerification, User
 
 from .forms import UserLoginForm, UserProfileForm, UserRegistrationForm
@@ -50,3 +51,13 @@ class EmailVerificationView(TitleMixin, TemplateView):
         else:
             return HttpResponseRedirect(reverse('index'))
 
+
+class ResetPasswordView(SuccessMessageMixin, PasswordResetView):
+    template_name = 'users/password_reset.html'
+    email_template_name = 'users/password_reset_email.txt'
+    subject_template_name = 'users/password_reset_subject.html'
+    success_message = "We've emailed you instructions for setting your password, " \
+                      "if an account exists with the email you entered. You should receive them shortly." \
+                      " If you don't receive an email, " \
+                      "please make sure you've entered the address you registered with, and check your spam folder."
+    success_url = reverse_lazy('users:login')

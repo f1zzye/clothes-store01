@@ -1,18 +1,20 @@
-import stripe
 from http import HTTPStatus
-from django.http import HttpResponse
 
-
-from django.http import HttpResponseRedirect
-from django.views.generic.edit import CreateView
-from django.views.generic.base import TemplateView
+import stripe
+from django.conf import settings
+from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
-from products.models import Basket
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import DetailView
+from django.views.generic.base import TemplateView
+from django.views.generic.edit import CreateView
+from django.views.generic.list import ListView
 
 from common.views import TitleMixin
+from orders.models import Order
+from products.models import Basket
+
 from .forms import OrderForm
-from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -24,6 +26,26 @@ class SuccessTemplateView(TemplateView, TitleMixin):
 
 class CanceledTemplateView(TemplateView, TitleMixin):
     template_name = 'orders/canceled.html'
+
+class OrderListView(ListView, TitleMixin):
+    template_name = 'orders/orders.html'
+    title = 'Store - Заказы'
+    queryset = Order.objects.all()
+    ordering = ('-created')
+
+    def get_queryset(self):
+        queryset = super(OrderListView, self).get_queryset()
+        return queryset.filter(initiator=self.request.user)
+
+
+class OrderDetailView(DetailView):
+    template_name = 'orders/order.html'
+    model = Order
+
+    def get_context_data(self, **kwargs):
+        context = super(OrderDetailView, self).get_context_data(**kwargs)
+        context['title'] = f'Store - Заказ №{self.object.id}'
+        return context
 
 
 class OrderCreateView(TitleMixin, CreateView):
@@ -76,13 +98,13 @@ def stripe_webhook_view(request):
 
         line_items = session.line_items
         # Fulfill the purchase...
-        fulfill_order(line_items)
+        fulfill_order(session)
 
     # Passed signature verification
     return HttpResponse(status=200)
 
 
 def fulfill_order(session):
-    # TODO: fill me in
     order_id = int(session.metadata.order_id)
-    print("Fulfilling order")
+    order = Order.objects.get(id=order_id)
+    order.update_after_payment()

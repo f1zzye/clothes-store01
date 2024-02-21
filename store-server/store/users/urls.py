@@ -1,8 +1,11 @@
+from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LogoutView
 from django.urls import path
+from django.contrib.auth import views as auth_views
+
 from users.views import (EmailVerificationView, UserLoginView, UserProfileView,
-                         UserRegistrationView)
+                         UserRegistrationView, ResetPasswordView)
 
 app_name = 'users'
 
@@ -12,6 +15,14 @@ urlpatterns = [
   path('profile/<int:pk>/', login_required(UserProfileView.as_view()), name='profile'),
   path('logout/', LogoutView.as_view(), name='logout'),
   path('verify/<str:email>/<uuid:code>/', EmailVerificationView.as_view(), name='email_verification'),
+  path('password_reset/', ResetPasswordView.as_view(), name='password_reset'),
+  path('password-reset-confirm/<uidb64>/<token>/',
+         auth_views.PasswordResetConfirmView.as_view(
+             template_name='users/password_reset_confirm.html',
+             success_url=reverse_lazy('users:password_reset_complete')  # указываем полное имя URL
+         ),
+         name='password_reset_confirm'),
+  path('password-reset-complete/',
+         auth_views.PasswordResetCompleteView.as_view(template_name='users/password_reset_complete.html'),
+         name='password_reset_complete'),
 ]
-
-
