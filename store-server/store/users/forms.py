@@ -6,6 +6,7 @@ from users.models import User
 from users.tasks import send_email_verification
 
 
+
 class UserLoginForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs ={
         'class': 'form-control py-4', 'placeholder': 'Введите имя пользователя'}))
@@ -15,6 +16,7 @@ class UserLoginForm(AuthenticationForm):
     class Meta:
         model = User
         fields = ['username', 'password']
+
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -31,9 +33,13 @@ class UserRegistrationForm(UserCreationForm):
     password2 = forms.CharField(widget=forms.PasswordInput(attrs={
         'class': 'form-control py-4', 'placeholder': 'Подтвердите пароль'}))
 
+
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
+
+
+
 
     def save(self, commit=True):
         user = super(UserRegistrationForm, self).save(commit=True)
